@@ -4,7 +4,6 @@ use tokio_postgres::config::Config;
 use bb8_postgres::{PostgresConnectionManager, bb8, tokio_postgres};
 use bb8::Pool;
 use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
 use std::convert::Infallible;
 use std::net::{IpAddr, Ipv4Addr};
 use std::env;
@@ -34,15 +33,24 @@ async fn main() {
     .allow_header("Content-Type")
     .allow_methods(&[Method::GET, Method::POST, Method::DELETE, Method::PUT]);
 
-    let root = warp::path::end().map(|| "api");
+    let root = warp::path::end()
+        .and(with_db(pool.clone()))
+        .and_then(|pool: DBPool| async move {
+        let connection = pool.get().await.expect("pool error");
+        let rows = connection.query("select \'Hello World\' ", &[]).await.unwrap();
+        let hello = Response {
+            message: rows[0].get(0)
+        };
+        Ok::<warp::reply::Json, warp::Rejection>(warp::reply::json(&hello))
+    })
+    .with(&cors);
 
     let hello = warp::get()
-    .and(warp::path!("hello"))
+    .and(warp::path!("yo"))
     .and(with_db(pool.clone()))
-    .and(warp::query::<HashMap<String, String>>())
-    .and_then(|pool: DBPool, _p: HashMap<String, String>| async move {
+    .and_then(|pool: DBPool| async move {
         let connection = pool.get().await.expect("pool error");
-        let rows = connection.query("select \'hello world\' ", &[]).await.unwrap();
+        let rows = connection.query("select \'yo\' ", &[]).await.unwrap();
         let hello = Response {
             message: rows[0].get(0)
         };
