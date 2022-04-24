@@ -6,8 +6,8 @@ An example project to get warp and bb8_postgres working.
 
 ## Features
 
-- warp
-- bb8_postgres
+- [warp](https://github.com/seanmonstar/warp)
+- [bb8_postgres](https://docs.rs/bb8-postgres/latest/bb8_postgres/)
 
 ## How to run
 1. Set .env varables
